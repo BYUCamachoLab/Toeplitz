@@ -27,9 +27,13 @@ class Toeplitz:
             indices.append(i)
         data = np.delete(data, indices)
         return N, data
-        
+    
+    #N, data = calculate_N(self, data)
 
-    def plot_data(self, data, n):
+    def plot_data(self, n):
+        #calculate_N(self, data)
+        #N = calculate_N.N
+        N, data = calculate_N(self, data)
         # Bin up voltages and assign each bin a number from 0-255
         binned_data, bins = np.histogram(data, bins=2**n-1)             #binned_data created
         # Digitize raw data
@@ -44,8 +48,9 @@ class Toeplitz:
         plt.show()
         return binned_data, data_digital                               
 
-    def min_entropy(self, binned_data):                                  
-        N, data = calculate_N(self, binned_data)
+    def min_entropy(self):  
+        binned_data, data_digital = plot_data(self, n)                              
+        N, data = calculate_N(self, data)
         # Find probability max
         pmax = np.max(binned_data)/2**N                                  #call for binned_data
         # Find minimum-entropy
@@ -53,20 +58,25 @@ class Toeplitz:
         return min_ent                                                
 
     # Find output length
-    def output_length(self, n, min_ent):                                 #call for min_ent
+    def output_length(self, n):                                 #call for min_ent
+        binned_data, data_digital = plot_data(self, n)  
+        min_ent = min_entropy(self, binned_data)
         out_len = 2**n * (min_ent/n)                                     #out_len created
         out_len = round(out_len)
         return out_len                                                 
 
     # Generate random 2^n by 2^m toeplitz matrix
-    def toep_mat(self, out_len, n):
+    def toep_mat(self, n):
+        out_len = output_length(self, n)
         row = np.random.randint(2, size=out_len)                         #call for out_len
         col = np.random.randint(2, size=2**n)
         toep_mat = toeplitz(row, col)                                    #toep_mat created
         return toep_mat                                                 
 
     # Convert digitized raw data to binary
-    def decToBin_data(self, data_digital, N):                            #call for data_digital
+    def decToBin_data(self):                            #call for data_digital
+        N, data = calculate_N(self, data)
+        binned_data, data_digital = plot_data(self, n)  
         def decToBin(data_pt, depth, bin_pts): 
             if data_pt >= 1:
                 bin_pts = decToBin(data_pt // 2, depth - 1, bin_pts)
@@ -75,13 +85,17 @@ class Toeplitz:
         binary_data = []
         for i in range(2**N):
             zeros = np.zeros(8)
-            binary_data.append(decToBin(data_digital[i], 7, zeros))      #call for data_digital
+            binary_data.append(decToBin(data_digital[i], 7, zeros))      #call for data_digital ---------- ???
         binary_data = np.reshape(binary_data, (2**N, 8))
         data_flat = binary_data.flatten()                                #data_flat created
         return data_flat
 
     # Toeplitz Hash function
-    def toeplitz_hash(self, data_flat, m, n, N, toep_mat):
+    def toeplitz_hash(self, n):
+        N, data = calculate_N(self, data)
+        out_len = output_length(self, n)
+        data_flat = decToBin_data(self)
+        toep_mat = toep_mat(self, n)
         # Split digitized data into chunks of size 2^n                      #call for N
         split = np.array_split(data_flat, n * 2**(N-n))                  #call for data_flat
         # perform matrix multiplication of Toeplitz with data chunks
@@ -90,7 +104,7 @@ class Toeplitz:
             sample_hashed = np.dot(toep_mat, data) % 2 
             data_hashed = np.append(data_hashed, sample_hashed)
         # split hashed data into chunks of size 2^n
-        data_hashed = np.array_split(data_hashed, m * 2**(N-n))             #call for m?
+        data_hashed = np.array_split(data_hashed, out_len * 2**(N-n))             #call for out_len
         decimal = []                                                        #decimal created
         for index, sample in enumerate(data_hashed): 
             x = ''.join([str(int(elem)) for elem in sample])
