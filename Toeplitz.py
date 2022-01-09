@@ -6,26 +6,20 @@ from scipy.constants import *
 from scipy.linalg import toeplitz
 
 class Toeplitz:
-    def __init__(self):
+    def __init__(self, data, n):
         self.bits = 8
+        self.data = data
+        self.n = n
 
-    # Import raw quantum data
-    # time_stamp = "2021_8_11_15_57"
-    time_stamp = "2021_7_6_10_52"
-    z_measur = f"C:/Users/sarah/Box/CamachoLab/Christian/QRNG/data/{time_stamp}_data.p"
-    z_data = pickle.load(open(z_measur, "rb"))
-    data = np.array(z_data["z_powmeas"])[-1]
-
-
-    def calculate_N(self, data):  
+    def calculate_N(self):  
         N = 0 # Used to generate 2^N raw data points from normal distribution
-        while (data.size - 2**N) >= 0:
+        while (self.data.size - 2**N) >= 0:
             N += 1
         N -= 1
         indices = []
-        for i in range(2**N, data.size):
+        for i in range(2**N, self.data.size):
             indices.append(i)
-        data = np.delete(data, indices)
+        data = np.delete(self.data, indices)
         return N, data
     
     #N, data = calculate_N(self, data)
@@ -33,7 +27,7 @@ class Toeplitz:
     def plot_data(self, n):
         #calculate_N(self, data)
         #N = calculate_N.N
-        N, data = calculate_N(self, data)
+        N, data = self.calculate_N(self, self.data)
         # Bin up voltages and assign each bin a number from 0-255
         binned_data, bins = np.histogram(data, bins=2**n-1)             #binned_data created
         # Digitize raw data
@@ -49,8 +43,8 @@ class Toeplitz:
         return binned_data, data_digital                               
 
     def min_entropy(self):  
-        binned_data, data_digital = plot_data(self, n)                              
-        N, data = calculate_N(self, data)
+        binned_data, data_digital = self.plot_data(self.n)                              
+        N, data = self.calculate_N(self, self.data)
         # Find probability max
         pmax = np.max(binned_data)/2**N                                  #call for binned_data
         # Find minimum-entropy
@@ -59,15 +53,15 @@ class Toeplitz:
 
     # Find output length
     def output_length(self, n):                                 #call for min_ent
-        binned_data, data_digital = plot_data(self, n)  
-        min_ent = min_entropy(self, binned_data)
+        binned_data, data_digital = self.plot_data(n)  
+        min_ent = self.min_entropy(binned_data)
         out_len = 2**n * (min_ent/n)                                     #out_len created
         out_len = round(out_len)
         return out_len                                                 
 
     # Generate random 2^n by 2^m toeplitz matrix
     def toep_mat(self, n):
-        out_len = output_length(self, n)
+        out_len = self.output_length(n)
         row = np.random.randint(2, size=out_len)                         #call for out_len
         col = np.random.randint(2, size=2**n)
         toep_mat = toeplitz(row, col)                                    #toep_mat created
@@ -75,8 +69,8 @@ class Toeplitz:
 
     # Convert digitized raw data to binary
     def decToBin_data(self):                            #call for data_digital
-        N, data = calculate_N(self, data)
-        binned_data, data_digital = plot_data(self, n)  
+        N, data = self.calculate_N(self.data)
+        binned_data, data_digital = self.plot_data(self.n)  
         def decToBin(data_pt, depth, bin_pts): 
             if data_pt >= 1:
                 bin_pts = decToBin(data_pt // 2, depth - 1, bin_pts)
@@ -92,10 +86,10 @@ class Toeplitz:
 
     # Toeplitz Hash function
     def toeplitz_hash(self, n):
-        N, data = calculate_N(self, data)
-        out_len = output_length(self, n)
-        data_flat = decToBin_data(self)
-        toep_mat = toep_mat(self, n)
+        N, data = self.calculate_N(self.data)
+        out_len = self.output_length(self.n)
+        data_flat = self.decToBin_data()
+        toep_mat = self.toep_mat(self.n)
         # Split digitized data into chunks of size 2^n                      #call for N
         split = np.array_split(data_flat, n * 2**(N-n))                  #call for data_flat
         # perform matrix multiplication of Toeplitz with data chunks
@@ -113,3 +107,12 @@ class Toeplitz:
         return decimal 
    
 
+if __name__ == "__main__":
+    # Import raw quantum data
+    # time_stamp = "2021_8_11_15_57"
+    time_stamp = "2021_7_6_10_52"
+    z_measur = f"C:/Users/sarah/Box/CamachoLab/Christian/QRNG/data/{time_stamp}_data.p"
+    z_data = pickle.load(open(z_measur, "rb"))
+    data = np.array(z_data["z_powmeas"])[-1]
+
+    t = Toeplitz(data, 8)
