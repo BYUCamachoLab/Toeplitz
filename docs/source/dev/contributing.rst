@@ -1,1 +1,0 @@
-what you can do to help improve this package
