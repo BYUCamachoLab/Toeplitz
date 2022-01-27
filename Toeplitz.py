@@ -29,9 +29,9 @@ class Toeplitz:
         #N = calculate_N.N
         N, data = self.calculate_N(self, self.data)
         # Bin up voltages and assign each bin a number from 0-255
-        binned_data, bins = np.histogram(data, bins=2**n-1)             #binned_data created
+        binned_data, bins = np.histogram(data, bins=2**n-1)            
         # Digitize raw data
-        data_digital = np.digitize(data, bins, right=True)              #data_digital created
+        data_digital = np.digitize(data, bins, right=True)             
         # Plot histogram of raw digitized data
         fig, ax = plt.subplots()  
         ax.hist(data_digital,bins=2**n-1, label='Digitized Raw Data')
@@ -46,29 +46,29 @@ class Toeplitz:
         binned_data, data_digital = self.plot_data(self.n)                              
         N, data = self.calculate_N(self, self.data)
         # Find probability max
-        pmax = np.max(binned_data)/2**N                                  #call for binned_data
+        pmax = np.max(binned_data)/2**N                                 
         # Find minimum-entropy
-        min_ent = -np.log2(pmax)                                         #min_ent created
+        min_ent = -np.log2(pmax)                                       
         return min_ent                                                
 
     # Find output length
-    def output_length(self, n):                                 #call for min_ent
+    def output_length(self, n):                               
         binned_data, data_digital = self.plot_data(n)  
         min_ent = self.min_entropy(binned_data)
-        out_len = 2**n * (min_ent/n)                                     #out_len created
+        out_len = 2**n * (min_ent/n)                                    
         out_len = round(out_len)
         return out_len                                                 
 
     # Generate random 2^n by 2^m toeplitz matrix
     def toep_mat(self, n):
         out_len = self.output_length(n)
-        row = np.random.randint(2, size=out_len)                         #call for out_len
+        row = np.random.randint(2, size=out_len)                        
         col = np.random.randint(2, size=2**n)
-        toep_mat = toeplitz(row, col)                                    #toep_mat created
+        toep_mat = toeplitz(row, col)                                    
         return toep_mat                                                 
 
     # Convert digitized raw data to binary
-    def decToBin_data(self):                            #call for data_digital
+    def decToBin_data(self):                            
         N, data = self.calculate_N(self.data)
         binned_data, data_digital = self.plot_data(self.n)  
         def decToBin(data_pt, depth, bin_pts): 
@@ -79,9 +79,9 @@ class Toeplitz:
         binary_data = []
         for i in range(2**N):
             zeros = np.zeros(8)
-            binary_data.append(decToBin(data_digital[i], 7, zeros))      #call for data_digital ---------- ???
+            binary_data.append(decToBin(data_digital[i], 7, zeros))      
         binary_data = np.reshape(binary_data, (2**N, 8))
-        data_flat = binary_data.flatten()                                #data_flat created
+        data_flat = binary_data.flatten()                                
         return data_flat
 
     # Toeplitz Hash function
@@ -90,16 +90,16 @@ class Toeplitz:
         out_len = self.output_length(self.n)
         data_flat = self.decToBin_data()
         toep_mat = self.toep_mat(self.n)
-        # Split digitized data into chunks of size 2^n                      #call for N
-        split = np.array_split(data_flat, n * 2**(N-n))                  #call for data_flat
+        # Split digitized data into chunks of size 2^n                     
+        split = np.array_split(data_flat, n * 2**(N-n))                 
         # perform matrix multiplication of Toeplitz with data chunks
         data_hashed = np.dot(toep_mat, split[0]) % 2
         for index, data in enumerate(split[1:-1]):  
             sample_hashed = np.dot(toep_mat, data) % 2 
             data_hashed = np.append(data_hashed, sample_hashed)
         # split hashed data into chunks of size 2^n
-        data_hashed = np.array_split(data_hashed, out_len * 2**(N-n))             #call for out_len
-        decimal = []                                                        #decimal created
+        data_hashed = np.array_split(data_hashed, out_len * 2**(N-n))            
+        decimal = []                                                       
         for index, sample in enumerate(data_hashed): 
             x = ''.join([str(int(elem)) for elem in sample])
             decimal = np.append(decimal, int(x, 2))
