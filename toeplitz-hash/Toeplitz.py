@@ -1,3 +1,12 @@
+"""
+toeplitz-hash.toeplitz
+===============
+
+This module contains the main ``Toeplitz`` class. This is where
+the toeplitz hashing takes place.
+
+"""
+
 from typing import Callable
 import numpy as np
 import pickle
@@ -6,12 +15,26 @@ from scipy.constants import *
 from scipy.linalg import toeplitz
 
 class Toeplitz:
+    """ 
+    The ``Toeplitz`` class executes the toeplitz hashing. It 
+    requires a large set of random data and the resolution of your
+    ADC as input.
+
+    """
+
     def __init__(self, data, n):
         self.bits = 8
         self.data = data
         self.n = n
 
     def calculate_N(self):  
+        """ 
+        Calculates a power of 2 closest to, but under, the size
+        of the original input data. We call this power, N. Resizes 
+        data by taking first 2^N data points and deleting the rest.
+
+        Returns N and newly sized data.
+        """
         N = 0 # Used to generate 2^N raw data points from normal distribution
         while (self.data.size - 2**N) >= 0:
             N += 1
@@ -25,6 +48,7 @@ class Toeplitz:
     #N, data = calculate_N(self, data)
 
     def plot_data(self, n):
+        """ Bins up data and plots. """
         #calculate_N(self, data)
         #N = calculate_N.N
         N, data = self.calculate_N(self, self.data)
@@ -43,6 +67,10 @@ class Toeplitz:
         return binned_data, data_digital                               
 
     def min_entropy(self):  
+        """Calculates the minimum entropy of the data.
+
+        Returns minimum entropy.
+        """
         binned_data, data_digital = self.plot_data(self.n)                              
         N, data = self.calculate_N(self, self.data)
         # Find probability max
@@ -52,7 +80,12 @@ class Toeplitz:
         return min_ent                                                
 
     # Find output length
-    def output_length(self, n):                               
+    def output_length(self, n):  
+        """ 
+        Calculates length of the output data using min-entropy.
+
+        Returns output length.
+        """                             
         binned_data, data_digital = self.plot_data(n)  
         min_ent = self.min_entropy(binned_data)
         out_len = 2**n * (min_ent/n)                                    
@@ -61,6 +94,11 @@ class Toeplitz:
 
     # Generate random 2^n by 2^m toeplitz matrix
     def toep_mat(self, n):
+        """
+        Constructs a random n x m binary Toeplitz matrix.
+        
+        Returns constructed Toeplitz matrix.
+        """
         out_len = self.output_length(n)
         row = np.random.randint(2, size=out_len)                        
         col = np.random.randint(2, size=2**n)
@@ -68,10 +106,29 @@ class Toeplitz:
         return toep_mat                                                 
 
     # Convert digitized raw data to binary
-    def decToBin_data(self):                            
+    def decToBin_data(self):   
+        """
+        Converts data from decimal to binary.
+
+        Returns flattened array of the binary data.
+        """                   
         N, data = self.calculate_N(self.data)
         binned_data, data_digital = self.plot_data(self.n)  
         def decToBin(data_pt, depth, bin_pts): 
+            """ 
+            General function converting decimal to binary.
+
+            Parameters
+            ----------
+            data_pt :
+                Number you want to convert to binary.
+            depth :
+                How many bits you want the number represented with.
+            bin_pts :
+                Recursive part of function.
+            
+            Returns binary number.
+            """
             if data_pt >= 1:
                 bin_pts = decToBin(data_pt // 2, depth - 1, bin_pts)
                 bin_pts[depth] = data_pt % 2
@@ -86,6 +143,11 @@ class Toeplitz:
 
     # Toeplitz Hash function
     def toeplitz_hash(self, n):
+        """
+        Performs the Toeplitz hashing.
+
+        Returns digitized hashed data.
+        """
         N, data = self.calculate_N(self.data)
         out_len = self.output_length(self.n)
         data_flat = self.decToBin_data()
