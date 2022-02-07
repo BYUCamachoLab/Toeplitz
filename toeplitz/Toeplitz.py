@@ -1,5 +1,5 @@
 """
-toeplitz-hash.toeplitz
+ottoeplitz.toeplitz
 ===============
 
 This module contains the main ``Toeplitz`` class. This is where
@@ -27,7 +27,7 @@ class Toeplitz:
         self.data = data
         self.n = n
 
-    def calculate_N(self):  
+    def _calculate_N(self):  
         """ 
         Calculates a power of 2 closest to, but under, the size
         of the original input data. We call this power, N. Resizes 
@@ -36,43 +36,27 @@ class Toeplitz:
         Returns N and newly sized data.
         """
         N = 0 # Used to generate 2^N raw data points from normal distribution
-        while (self.data.size - 2**N) >= 0:
+        while (len(self.data) - 2**N) >= 0:
             N += 1
         N -= 1
         indices = []
-        for i in range(2**N, self.data.size):
+        for i in range(2**N, len(self.data)):
             indices.append(i)
         data = np.delete(self.data, indices)
         return N, data
     
     #N, data = calculate_N(self, data)
 
-    def plot_data(self, n):
-        """ Bins up data and plots. """
-        #calculate_N(self, data)
-        #N = calculate_N.N
-        N, data = self.calculate_N(self, self.data)
-        # Bin up voltages and assign each bin a number from 0-255
-        binned_data, bins = np.histogram(data, bins=2**n-1)            
-        # Digitize raw data
-        data_digital = np.digitize(data, bins, right=True)             
-        # Plot histogram of raw digitized data
-        fig, ax = plt.subplots()  
-        ax.hist(data_digital,bins=2**n-1, label='Digitized Raw Data')
-        ax.legend()
-        plt.xlabel('Random numbers')
-        plt.ylabel('Frequency')
-        plt.title("-35 dbm measurements")
-        plt.show()
-        return binned_data, data_digital                               
+                            
 
-    def min_entropy(self):  
+    def _min_entropy(self):  
         """Calculates the minimum entropy of the data.
 
         Returns minimum entropy.
         """
-        binned_data, data_digital = self.plot_data(self.n)                              
-        N, data = self.calculate_N(self, self.data)
+        # binned_data, data_digital = self.plot_data(self.n)  
+        binned_data, bins = np.histogram(self.data, bins=2**self.n-1)                              
+        N, data = self._calculate_N()
         # Find probability max
         pmax = np.max(binned_data)/2**N                                 
         # Find minimum-entropy
@@ -80,40 +64,40 @@ class Toeplitz:
         return min_ent                                                
 
     # Find output length
-    def output_length(self, n):  
+    def _output_length(self, n):  
         """ 
         Calculates length of the output data using min-entropy.
 
         Returns output length.
-        """                             
-        binned_data, data_digital = self.plot_data(n)  
-        min_ent = self.min_entropy(binned_data)
+        """                              
+        min_ent = self._min_entropy()
         out_len = 2**n * (min_ent/n)                                    
         out_len = round(out_len)
         return out_len                                                 
 
     # Generate random 2^n by 2^m toeplitz matrix
-    def toep_mat(self, n):
+    def _toep_mat(self, n):
         """
         Constructs a random n x m binary Toeplitz matrix.
         
         Returns constructed Toeplitz matrix.
         """
-        out_len = self.output_length(n)
+        out_len = self._output_length(n)
         row = np.random.randint(2, size=out_len)                        
         col = np.random.randint(2, size=2**n)
         toep_mat = toeplitz(row, col)                                    
         return toep_mat                                                 
 
     # Convert digitized raw data to binary
-    def decToBin_data(self):   
+    def _decToBin_data(self):   
         """
         Converts data from decimal to binary.
 
         Returns flattened array of the binary data.
         """                   
-        N, data = self.calculate_N(self.data)
-        binned_data, data_digital = self.plot_data(self.n)  
+        N, data = self._calculate_N()
+        binned_data, bins = np.histogram(self.data, bins=2**self.n-1) 
+        data_digital = np.digitize(data, bins, right=True)  
         def decToBin(data_pt, depth, bin_pts): 
             """ 
             General function converting decimal to binary.
@@ -142,16 +126,16 @@ class Toeplitz:
         return data_flat
 
     # Toeplitz Hash function
-    def toeplitz_hash(self, n):
+    def hash(self, n):
         """
         Performs the Toeplitz hashing.
 
         Returns digitized hashed data.
         """
-        N, data = self.calculate_N(self.data)
-        out_len = self.output_length(self.n)
-        data_flat = self.decToBin_data()
-        toep_mat = self.toep_mat(self.n)
+        N, data = self._calculate_N()
+        out_len = self._output_length(self.n)
+        data_flat = self._decToBin_data()
+        toep_mat = self._toep_mat(self.n)
         # Split digitized data into chunks of size 2^n                     
         split = np.array_split(data_flat, n * 2**(N-n))                 
         # perform matrix multiplication of Toeplitz with data chunks
@@ -165,7 +149,7 @@ class Toeplitz:
         for index, sample in enumerate(data_hashed): 
             x = ''.join([str(int(elem)) for elem in sample])
             decimal = np.append(decimal, int(x, 2))
-        decimal = decimal[decimal != 255]
+        decimal = decimal[decimal != 254]
         return decimal 
    
 
@@ -178,3 +162,36 @@ if __name__ == "__main__":
     data = np.array(z_data["z_powmeas"])[-1]
 
     t = Toeplitz(data, 8)
+
+import random    
+
+data = []
+
+for i in range(2**16):
+    temp = random.gauss(5, .05)
+    data = np.append(data, temp)
+
+def plot_data(data, n):
+        """ Bins up data and plots. """
+        #calculate_N(self, data)
+        #N = calculate_N.N
+        N, data = Toeplitz._calculate_N(data)
+        # Bin up voltages and assign each bin a number from 0-255
+        binned_data, bins = np.histogram(data, bins=2**n-1)            
+        # Digitize raw data
+        data_digital = np.digitize(data, bins, right=True)             
+        # Plot histogram of raw digitized data
+        fig, ax = plt.subplots()  
+        ax.hist(data_digital,bins=2**n-1, label='Digitized Raw Data')
+        ax.legend()
+        plt.xlabel('Random numbers')
+        plt.ylabel('Frequency')
+        plt.title("Quantum Random Numbers")
+        plt.show()
+        return binned_data, data_digital       
+    
+
+t = Toeplitz(data, 8)
+plot_data(data, 8)
+dist = t.hash(8)    
+plot_data(dist, 8)

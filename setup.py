@@ -4,7 +4,7 @@ def readme():
     with open('README.md') as f:
         return f.read()
 
-setup(name='toeplitz-hash',
+setup(name='toeplitz',
       version='0.1',
       description='Toeplitz hashing algorithm for post-processing Quantum Random Number Generation',
       classifiers=[
@@ -13,13 +13,13 @@ setup(name='toeplitz-hash',
         'Programming Language :: Python :: 3.9',
         'Topic :: Security :: Cryptography',
       ],
-      url='https://github.com/BYUCamachoLab/toeplitz-hash',
+      url='https://github.com/BYUCamachoLab/ottoeplitz',
       author='Sarah Maia, Sarah Gonzalez',
       author_email='sarahcrismaia@gmail.com, sarahg.3545@gmail.com',
       license='MIT',
-      packages=['toeplitz-hash'],
+      packages=['toeplitz'],
       install_requires=[
-          'numpy', 'scipy', 'pickle', 'matplotlib'],
+          'numpy', 'scipy', 'matplotlib'],
       test_suite='nose.collector',
       tests_require=['nose'],
       include_package_data=True,
