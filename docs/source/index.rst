@@ -1,1 +1,0 @@
-Toeplitz Hash Documentation

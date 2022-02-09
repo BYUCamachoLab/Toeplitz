@@ -1,6 +1,6 @@
 from unittest import TestCase
 import pytest
-from toeplitz import Toeplitz
+from ottoeplitz import Toeplitz
 import numpy as np
 
 file1 = open('test_data.txt', 'r')
