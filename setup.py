@@ -6,7 +6,7 @@ def readme():
 
 setup(name='ottoeplitz',
       version='0.1',
-      description='Toeplitz hashing algorithm for post-processing Quantum Random Number Generation',
+      description='Toeplitz hashing algorithm for post-processing Random Number Generation',
       classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
@@ -25,5 +25,3 @@ setup(name='ottoeplitz',
       tests_require=['nose'],
       include_package_data=True,
       zip_safe=False)
-
-#TODO: register package to PyPi

@@ -22,11 +22,8 @@ inputdata = np.array(inputdata)
 def plot_data(data, n):
         """ Bins up data and plots. """
         N, data = ottoeplitz.Toeplitz._calculate_N(data)
-        # Bin up voltages and assign each bin a number from 0-255
-        binned_data, bins = np.histogram(data, bins=2**n-1)            
-        # Digitize raw data
-        data_digital = np.digitize(data, bins, right=True)             
-        # Plot histogram of raw digitized data
+        binned_data, bins = np.histogram(data, bins=2**n-1)     
+        data_digital = np.digitize(data, bins, right=True)   
         fig, ax = plt.subplots()  
         ax.hist(data_digital,bins=2**n-1, label='Digitized Raw Data')
         plt.xlabel('Random numbers')
